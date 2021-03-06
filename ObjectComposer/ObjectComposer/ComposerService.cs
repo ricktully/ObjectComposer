@@ -4,34 +4,32 @@ namespace Rtully.LinkedIn.Articles.ObjectComposer
 {
     public class ComposerService : IObjectComposer
     {
-        private static IObjectComposer _Clone = null;
-        protected static Dictionary<string, object> factories;
+        protected static Dictionary<string, object> mappers;
 
-        public static IObjectComposer ComposerFactory
+        public static IObjectComposer Composer
         {
-            get
-            {
-                if (_Clone == null)
-                {
-                    _Clone = new ComposerService();
-                }
-                return _Clone;
-            }
-            set { _Clone = value; }
+            get; set;
         }
 
         /// <summary>
-        /// 
+        /// static constructors in C# are specified to execute only when an instance 
+        /// of the class is created or a static member is referenced, and to execute 
+        /// only once per AppDomain
         /// </summary>
-        public ComposerService()
+        static ComposerService()
         {
-            factories = new Dictionary<string, object>();
+            Composer = new ComposerService();
+            mappers = new Dictionary<string, object>();
         }
 
-        public void RegisterObjectMapper<S, T>(IObjectMapper<S, T> objectFactory)
+        private ComposerService()
+        {           
+        }
+
+        public static void RegisterObjectMapper<S, T>(IObjectMapper<S, T> objectFactory)
         {
             string factoryKey = typeof(S).FullName + typeof(T).FullName;
-            factories[factoryKey] = objectFactory;
+            mappers[factoryKey] = objectFactory;
         }
 
         /// <summary>
@@ -40,12 +38,12 @@ namespace Rtully.LinkedIn.Articles.ObjectComposer
         /// <typeparam name="S">Source type</typeparam>
         /// <typeparam name="T">Target type</typeparam>
         /// <returns></returns>
-        public IObjectMapper<S, T> GetObjectMapper<S, T>()
+        private IObjectMapper<S, T> GetObjectMapper<S, T>()
             where S : new()
             where T : new()
         {
             string factoryKey = typeof(S).FullName + typeof(T).FullName;
-            factories.TryGetValue(factoryKey, out object mapperObj);
+            mappers.TryGetValue(factoryKey, out object mapperObj);
             IObjectMapper<S, T> mapper = mapperObj as IObjectMapper<S, T>;
             if (mapper == null)
             {
